@@ -54,6 +54,7 @@
     let usedWords = [];
     let currentQuestion = {};
     let currentLesson = "";
+    let learnProgress = {}; // { lesson: { word: count } }
 
     function shuffle(arr) {
       return arr.sort(() => Math.random() - 0.5);
@@ -65,18 +66,27 @@
       speechSynthesis.speak(utter);
     }
 
-    function renderQuestion() {
-      if (vocabulary.length === 0) {
-        document.getElementById("question").innerText = "Chưa có từ để học.";
-        document.getElementById("choices").innerHTML = "";
-        document.getElementById("feedback").innerText = "";
+    function renderProgressStats() {
+      if (!vocabulary.length) {
+        document.getElementById("progressStats").innerText = "";
         return;
       }
 
-      const pool = vocabulary.filter(v => !usedWords.includes(v.word));
+      const progress = learnProgress[currentLesson] || {};
+      const learned = vocabulary.filter(v => (progress[v.word] || 0) >= 3).length;
+      const total = vocabulary.length;
+      document.getElementById("progressStats").innerText = `✅ Đã học xong: ${learned} / 🕐 Còn lại: ${total - learned}`;
+    }
+
+    function renderQuestion() {
+      const progress = learnProgress[currentLesson] || {};
+
+      const pool = vocabulary.filter(v => (progress[v.word] || 0) < 3 && !usedWords.includes(v.word));
       if (pool.length === 0) {
-        document.getElementById("question").innerText = "✅ Học phần hoàn thành!";
+        document.getElementById("question").innerText = "🎉 Bạn đã hoàn thành học phần!";
         document.getElementById("choices").innerHTML = "";
+        document.getElementById("feedback").innerText = "";
+        renderProgressStats();
         return;
       }
 
@@ -106,24 +116,36 @@
       });
 
       document.getElementById("feedback").innerText = "";
+      renderProgressStats();
     }
 
     function handleAnswer(choice) {
       const feedback = document.getElementById("feedback");
-      if (choice === currentQuestion.meaning) {
+      const correctWord = currentQuestion.word;
+      const correctMeaning = currentQuestion.meaning;
+
+      if (!learnProgress[currentLesson]) {
+        learnProgress[currentLesson] = {};
+      }
+
+      if (choice === correctMeaning) {
+        learnProgress[currentLesson][correctWord] = (learnProgress[currentLesson][correctWord] || 0) + 1;
         feedback.innerText = "✅ Chính xác!";
         feedback.className = "mt-4 text-center text-lg font-bold text-green-600";
       } else {
-        feedback.innerText = "❌ Sai. Đáp án đúng: " + currentQuestion.meaning;
+        feedback.innerText = `❌ Sai. Đáp án đúng: ${correctMeaning}`;
         feedback.className = "mt-4 text-center text-lg font-bold text-red-600";
       }
+
+      // Lưu lại tiến độ
+      localStorage.setItem("learnProgress", JSON.stringify(learnProgress));
+      renderProgressStats();
     }
 
     function nextQuestion() {
       renderQuestion();
     }
 
-    // Modal
     function openImport() {
       document.getElementById("importModal").classList.remove("hidden");
     }
@@ -151,6 +173,11 @@
       lessons[lesson] = newVocab;
       localStorage.setItem("lessons", JSON.stringify(lessons));
 
+      // Xoá tiến độ cũ nếu import lại
+      const progress = JSON.parse(localStorage.getItem("learnProgress") || "{}");
+      delete progress[lesson];
+      localStorage.setItem("learnProgress", JSON.stringify(progress));
+
       loadLessonList();
       selectLesson(lesson);
       closeImport();
@@ -172,7 +199,10 @@
 
     function selectLesson(lesson) {
       const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      const progress = JSON.parse(localStorage.getItem("learnProgress") || "{}");
+
       vocabulary = lessons[lesson] || [];
+      learnProgress = progress;
       usedWords = [];
       currentLesson = lesson;
       nextQuestion();
@@ -180,6 +210,7 @@
 
     loadLessonList();
   </script>
+
 </body>
 
 </html>
