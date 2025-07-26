@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <title>Japanese Vocabulary Quiz</title>
@@ -11,22 +12,26 @@
       max-width: 600px;
       margin: auto;
     }
+
     h1 {
       text-align: center;
       color: #2c3e50;
     }
+
     .card {
       background: white;
       padding: 1.5rem;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       margin-bottom: 1rem;
     }
+
     .question {
       font-size: 1.5rem;
       margin-bottom: 1rem;
       text-align: center;
     }
+
     .choices button {
       display: block;
       width: 100%;
@@ -35,12 +40,14 @@
       font-size: 1rem;
       cursor: pointer;
     }
+
     .feedback {
       text-align: center;
       font-weight: bold;
       font-size: 1.2rem;
       margin-top: 1rem;
     }
+
     #nextBtn {
       display: block;
       margin: 1rem auto 0;
@@ -49,6 +56,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <h1>Học từ vựng tiếng Nhật</h1>
@@ -59,27 +67,35 @@
     <div class="feedback" id="feedback"></div>
     <button id="nextBtn" onclick="nextQuestion()">Câu tiếp theo</button>
 
+    <!-- Nút Import -->
     <button onclick="openImport()">📥 Import từ mới</button>
 
-    <div id="importModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:white; border:1px solid #ccc; padding:20px; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.2); max-width:400px; width:90%;">
-    <h3>Import từ vựng</h3>
-    <textarea id="importTextarea" style="width:100%; height:150px;"></textarea>
-    <br>
-    <button onclick="saveImport()">💾 Lưu</button>
-    <button onclick="closeImport()">❌ Đóng</button>
+    <!-- Popup nhập học phần -->
+    <div id="importModal"
+      style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:white; border:1px solid #ccc; padding:20px; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.2); max-width:400px; width:90%;">
+      <h3>Import học phần</h3>
+      <input type="text" id="lessonName" placeholder="Tên học phần (VD: Bài 1)"
+        style="width:100%; margin-bottom:10px;" />
+      <textarea id="importTextarea" style="width:100%; height:150px;"
+        placeholder="Nhập từ dạng: 日本語 - Tiếng Nhật"></textarea>
+      <br>
+      <button onclick="saveImport()">💾 Lưu</button>
+      <button onclick="closeImport()">❌ Đóng</button>
     </div>
+
+    <!-- Danh sách học phần -->
+    <h3>📚 Học phần:</h3>
+    <div id="lessonList"></div>
+
+  </div>
 
   </div>
 
   <script>
-    const storedVocab = localStorage.getItem("userVocab");
-    if (storedVocab) {
-        vocabulary = JSON.parse(storedVocab);
-    }
-
-
-    let currentQuestion = {};
+    let vocabulary = [];
     let usedWords = [];
+    let currentQuestion = {};
+    let currentLesson = "";
 
     function shuffle(arr) {
       return arr.sort(() => Math.random() - 0.5);
@@ -92,12 +108,17 @@
     }
 
     function renderQuestion() {
-      const pool = vocabulary.filter(v => !usedWords.includes(v.word));
-      if (pool.length === 0) {
-        document.getElementById("question").innerText = "Hết từ để học!";
+      if (vocabulary.length === 0) {
+        document.getElementById("question").innerText = "Chưa có từ nào để học.";
         document.getElementById("choices").innerHTML = "";
         document.getElementById("feedback").innerText = "";
-        document.getElementById("nextBtn").disabled = true;
+        return;
+      }
+
+      const pool = vocabulary.filter(v => !usedWords.includes(v.word));
+      if (pool.length === 0) {
+        document.getElementById("question").innerText = "✅ Học phần hoàn thành!";
+        document.getElementById("choices").innerHTML = "";
         return;
       }
 
@@ -143,35 +164,68 @@
       renderQuestion();
     }
 
-    // Start first question
-    renderQuestion();
-
+    // Import Popup
     function openImport() {
-        document.getElementById("importModal").style.display = "block";
+      document.getElementById("importModal").style.display = "block";
     }
 
     function closeImport() {
-        document.getElementById("importModal").style.display = "none";
+      document.getElementById("importModal").style.display = "none";
     }
 
     function saveImport() {
-    const raw = document.getElementById("importTextarea").value.trim();
-    const lines = raw.split("\n").filter(line => line.includes("-"));
-    const newVocab = lines.map(line => {
+      const lesson = document.getElementById("lessonName").value.trim();
+      const raw = document.getElementById("importTextarea").value.trim();
+
+      if (!lesson || !raw) {
+        alert("Vui lòng nhập tên học phần và nội dung!");
+        return;
+      }
+
+      const lines = raw.split("\n").filter(line => line.includes("-"));
+      const newVocab = lines.map(line => {
         const [word, meaning] = line.split("-").map(s => s.trim());
         return { word, meaning };
-    });
+      });
 
-    // Lưu vào localStorage
-    localStorage.setItem("userVocab", JSON.stringify(newVocab));
+      // Lưu vào localStorage theo lesson
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      lessons[lesson] = newVocab;
+      localStorage.setItem("lessons", JSON.stringify(lessons));
 
-    // Cập nhật vocabulary hiện tại
-    vocabulary = [...newVocab];
-    usedWords = [];
-    closeImport();
-    nextQuestion();
+      // Cập nhật giao diện và học luôn
+      loadLessonList();
+      selectLesson(lesson);
+      closeImport();
     }
 
+    // Giao diện chọn học phần
+    function loadLessonList() {
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      const container = document.getElementById("lessonList");
+      container.innerHTML = "";
+
+      Object.keys(lessons).forEach(lesson => {
+        const btn = document.createElement("button");
+        btn.innerText = lesson;
+        btn.style.margin = "5px";
+        btn.onclick = () => selectLesson(lesson);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectLesson(lesson) {
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      vocabulary = lessons[lesson] || [];
+      usedWords = [];
+      currentLesson = lesson;
+      nextQuestion();
+    }
+
+    // Khởi động
+    loadLessonList();
   </script>
+
 </body>
+
 </html>
