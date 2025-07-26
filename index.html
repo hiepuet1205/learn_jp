@@ -58,17 +58,25 @@
     <div class="choices" id="choices"></div>
     <div class="feedback" id="feedback"></div>
     <button id="nextBtn" onclick="nextQuestion()">Câu tiếp theo</button>
+
+    <button onclick="openImport()">📥 Import từ mới</button>
+
+    <div id="importModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:white; border:1px solid #ccc; padding:20px; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.2); max-width:400px; width:90%;">
+    <h3>Import từ vựng</h3>
+    <textarea id="importTextarea" style="width:100%; height:150px;"></textarea>
+    <br>
+    <button onclick="saveImport()">💾 Lưu</button>
+    <button onclick="closeImport()">❌ Đóng</button>
+    </div>
+
   </div>
 
   <script>
-    const vocabulary = [
-      { word: "日本語", meaning: "Tiếng Nhật" },
-      { word: "車", meaning: "Xe hơi" },
-      { word: "学校", meaning: "Trường học" },
-      { word: "水", meaning: "Nước" },
-      { word: "先生", meaning: "Giáo viên" },
-      { word: "猫", meaning: "Con mèo" },
-    ];
+    const storedVocab = localStorage.getItem("userVocab");
+    if (storedVocab) {
+        vocabulary = JSON.parse(storedVocab);
+    }
+
 
     let currentQuestion = {};
     let usedWords = [];
@@ -137,6 +145,33 @@
 
     // Start first question
     renderQuestion();
+
+    function openImport() {
+        document.getElementById("importModal").style.display = "block";
+    }
+
+    function closeImport() {
+        document.getElementById("importModal").style.display = "none";
+    }
+
+    function saveImport() {
+    const raw = document.getElementById("importTextarea").value.trim();
+    const lines = raw.split("\n").filter(line => line.includes("-"));
+    const newVocab = lines.map(line => {
+        const [word, meaning] = line.split("-").map(s => s.trim());
+        return { word, meaning };
+    });
+
+    // Lưu vào localStorage
+    localStorage.setItem("userVocab", JSON.stringify(newVocab));
+
+    // Cập nhật vocabulary hiện tại
+    vocabulary = [...newVocab];
+    usedWords = [];
+    closeImport();
+    nextQuestion();
+    }
+
   </script>
 </body>
 </html>
