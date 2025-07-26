@@ -2,93 +2,51 @@
 <html lang="ja">
 
 <head>
-  <meta charset="UTF-8">
-  <title>Japanese Vocabulary Quiz</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding: 2rem;
-      max-width: 600px;
-      margin: auto;
-    }
-
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
-
-    .card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1rem;
-    }
-
-    .question {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    .choices button {
-      display: block;
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-
-    .feedback {
-      text-align: center;
-      font-weight: bold;
-      font-size: 1.2rem;
-      margin-top: 1rem;
-    }
-
-    #nextBtn {
-      display: block;
-      margin: 1rem auto 0;
-      padding: 0.5rem 1.5rem;
-      font-size: 1rem;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Học từ vựng tiếng Nhật</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-100 text-gray-800 min-h-screen p-4">
 
-  <h1>Học từ vựng tiếng Nhật</h1>
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-6">📘 Học từ vựng tiếng Nhật</h1>
 
-  <div class="card">
-    <div class="question" id="question">...</div>
-    <div class="choices" id="choices"></div>
-    <div class="feedback" id="feedback"></div>
-    <button id="nextBtn" onclick="nextQuestion()">Câu tiếp theo</button>
-
-    <!-- Nút Import -->
-    <button onclick="openImport()">📥 Import từ mới</button>
-
-    <!-- Popup nhập học phần -->
-    <div id="importModal"
-      style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:white; border:1px solid #ccc; padding:20px; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.2); max-width:400px; width:90%;">
-      <h3>Import học phần</h3>
-      <input type="text" id="lessonName" placeholder="Tên học phần (VD: Bài 1)"
-        style="width:100%; margin-bottom:10px;" />
-      <textarea id="importTextarea" style="width:100%; height:150px;"
-        placeholder="Nhập từ dạng: 日本語 - Tiếng Nhật"></textarea>
-      <br>
-      <button onclick="saveImport()">💾 Lưu</button>
-      <button onclick="closeImport()">❌ Đóng</button>
+    <!-- Câu hỏi -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+      <div class="text-xl text-center font-semibold mb-4" id="question">Câu hỏi</div>
+      <div id="choices" class="space-y-3"></div>
+      <div id="feedback" class="mt-4 text-center text-lg font-bold"></div>
+      <button onclick="nextQuestion()"
+        class="mt-6 block mx-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Câu tiếp theo</button>
     </div>
 
-    <!-- Danh sách học phần -->
-    <h3>📚 Học phần:</h3>
-    <div id="lessonList"></div>
+    <!-- Học phần -->
+    <div class="mb-4">
+      <h2 class="text-xl font-semibold mb-2">📚 Học phần:</h2>
+      <div id="lessonList" class="flex flex-wrap gap-2"></div>
+    </div>
 
+    <!-- Nút import -->
+    <button onclick="openImport()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      📥 Import từ mới
+    </button>
   </div>
 
+  <!-- Modal -->
+  <div id="importModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4">📥 Import học phần</h3>
+      <input type="text" id="lessonName" placeholder="Tên học phần (VD: Bài 1)"
+        class="w-full border border-gray-300 p-2 mb-3 rounded" />
+      <textarea id="importTextarea" placeholder="Nhập từ: 日本語 - Tiếng Nhật"
+        class="w-full border border-gray-300 p-2 h-40 rounded mb-3"></textarea>
+      <div class="flex justify-end gap-2">
+        <button onclick="saveImport()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">💾
+          Lưu</button>
+        <button onclick="closeImport()" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">❌ Đóng</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -109,7 +67,7 @@
 
     function renderQuestion() {
       if (vocabulary.length === 0) {
-        document.getElementById("question").innerText = "Chưa có từ nào để học.";
+        document.getElementById("question").innerText = "Chưa có từ để học.";
         document.getElementById("choices").innerHTML = "";
         document.getElementById("feedback").innerText = "";
         return;
@@ -142,6 +100,7 @@
       allChoices.forEach(choice => {
         const btn = document.createElement("button");
         btn.innerText = choice;
+        btn.className = "w-full bg-white border border-gray-300 px-4 py-2 rounded hover:bg-blue-100";
         btn.onclick = () => handleAnswer(choice);
         choiceContainer.appendChild(btn);
       });
@@ -153,10 +112,10 @@
       const feedback = document.getElementById("feedback");
       if (choice === currentQuestion.meaning) {
         feedback.innerText = "✅ Chính xác!";
-        feedback.style.color = "green";
+        feedback.className = "mt-4 text-center text-lg font-bold text-green-600";
       } else {
         feedback.innerText = "❌ Sai. Đáp án đúng: " + currentQuestion.meaning;
-        feedback.style.color = "red";
+        feedback.className = "mt-4 text-center text-lg font-bold text-red-600";
       }
     }
 
@@ -164,13 +123,13 @@
       renderQuestion();
     }
 
-    // Import Popup
+    // Modal
     function openImport() {
-      document.getElementById("importModal").style.display = "block";
+      document.getElementById("importModal").classList.remove("hidden");
     }
 
     function closeImport() {
-      document.getElementById("importModal").style.display = "none";
+      document.getElementById("importModal").classList.add("hidden");
     }
 
     function saveImport() {
@@ -188,18 +147,15 @@
         return { word, meaning };
       });
 
-      // Lưu vào localStorage theo lesson
       const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
       lessons[lesson] = newVocab;
       localStorage.setItem("lessons", JSON.stringify(lessons));
 
-      // Cập nhật giao diện và học luôn
       loadLessonList();
       selectLesson(lesson);
       closeImport();
     }
 
-    // Giao diện chọn học phần
     function loadLessonList() {
       const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
       const container = document.getElementById("lessonList");
@@ -208,7 +164,7 @@
       Object.keys(lessons).forEach(lesson => {
         const btn = document.createElement("button");
         btn.innerText = lesson;
-        btn.style.margin = "5px";
+        btn.className = "bg-gray-200 px-3 py-1 rounded hover:bg-blue-200";
         btn.onclick = () => selectLesson(lesson);
         container.appendChild(btn);
       });
@@ -222,10 +178,8 @@
       nextQuestion();
     }
 
-    // Khởi động
     loadLessonList();
   </script>
-
 </body>
 
 </html>
