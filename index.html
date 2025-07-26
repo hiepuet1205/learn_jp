@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Japanese Vocabulary Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    .question {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .choices button {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .feedback {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-top: 1rem;
+    }
+    #nextBtn {
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Học từ vựng tiếng Nhật</h1>
+
+  <div class="card">
+    <div class="question" id="question">...</div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Câu tiếp theo</button>
+  </div>
+
+  <script>
+    const vocabulary = [
+      { word: "日本語", meaning: "Tiếng Nhật" },
+      { word: "車", meaning: "Xe hơi" },
+      { word: "学校", meaning: "Trường học" },
+      { word: "水", meaning: "Nước" },
+      { word: "先生", meaning: "Giáo viên" },
+      { word: "猫", meaning: "Con mèo" },
+    ];
+
+    let currentQuestion = {};
+    let usedWords = [];
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function speakJapanese(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "ja-JP";
+      speechSynthesis.speak(utter);
+    }
+
+    function renderQuestion() {
+      const pool = vocabulary.filter(v => !usedWords.includes(v.word));
+      if (pool.length === 0) {
+        document.getElementById("question").innerText = "Hết từ để học!";
+        document.getElementById("choices").innerHTML = "";
+        document.getElementById("feedback").innerText = "";
+        document.getElementById("nextBtn").disabled = true;
+        return;
+      }
+
+      const correct = pool[Math.floor(Math.random() * pool.length)];
+      usedWords.push(correct.word);
+      currentQuestion = correct;
+
+      const otherChoices = vocabulary
+        .filter(v => v.word !== correct.word)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3)
+        .map(v => v.meaning);
+
+      const allChoices = shuffle([correct.meaning, ...otherChoices]);
+
+      document.getElementById("question").innerText = correct.word;
+      speakJapanese(correct.word);
+
+      const choiceContainer = document.getElementById("choices");
+      choiceContainer.innerHTML = "";
+      allChoices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.innerText = choice;
+        btn.onclick = () => handleAnswer(choice);
+        choiceContainer.appendChild(btn);
+      });
+
+      document.getElementById("feedback").innerText = "";
+    }
+
+    function handleAnswer(choice) {
+      const feedback = document.getElementById("feedback");
+      if (choice === currentQuestion.meaning) {
+        feedback.innerText = "✅ Chính xác!";
+        feedback.style.color = "green";
+      } else {
+        feedback.innerText = "❌ Sai. Đáp án đúng: " + currentQuestion.meaning;
+        feedback.style.color = "red";
+      }
+    }
+
+    function nextQuestion() {
+      renderQuestion();
+    }
+
+    // Start first question
+    renderQuestion();
+  </script>
+</body>
+</html>
