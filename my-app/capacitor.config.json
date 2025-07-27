@@ -1,0 +1,10 @@
+{
+  "appId": "com.example.app",
+  "appName": "learn jp",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}

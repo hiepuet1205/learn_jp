@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Học từ vựng tiếng Nhật</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-800 min-h-screen p-4">
+
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-6">📘 Học từ vựng tiếng Nhật</h1>
+
+    <div class="flex justify-between items-center mb-4">
+      <div id="progressStats" class="text-sm text-gray-700"></div>
+      <div class="text-xs text-gray-400">* Mỗi từ cần đúng 2 lần để hoàn thành</div>
+    </div>
+
+    <!-- Câu hỏi -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+      <div class="text-xl text-center font-semibold mb-4" id="question">Câu hỏi</div>
+      <div id="choices" class="space-y-3"></div>
+      <div id="feedback" class="mt-4 text-center text-lg font-bold"></div>
+      <button onclick="nextQuestion()"
+        class="mt-6 block mx-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Câu tiếp theo</button>
+    </div>
+
+    <!-- Học phần -->
+    <div class="mb-4">
+      <h2 class="text-xl font-semibold mb-2">📚 Học phần:</h2>
+      <div id="lessonList" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Nút import -->
+    <button onclick="openImport()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      📥 Import từ mới
+    </button>
+  </div>
+
+  <!-- Modal -->
+  <div id="importModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h3 class="text-xl font-bold mb-4">📥 Import học phần</h3>
+      <input type="text" id="lessonName" placeholder="Tên học phần (VD: Bài 1)"
+        class="w-full border border-gray-300 p-2 mb-3 rounded" />
+      <textarea id="importTextarea" placeholder="Nhập từ: 日本語 - Tiếng Nhật"
+        class="w-full border border-gray-300 p-2 h-40 rounded mb-3"></textarea>
+      <div class="flex justify-end gap-2">
+        <button onclick="saveImport()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">💾
+          Lưu</button>
+        <button onclick="closeImport()" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">❌ Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let vocabulary = [];
+    let usedWords = [];
+    let currentQuestion = {};
+    let currentLesson = "";
+    let learnCounter = {}; // { word: number of correct answers }
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function speakJapanese(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "ja-JP";
+      speechSynthesis.speak(utter);
+    }
+
+    function renderProgressStats() {
+      const learned = vocabulary.filter(v => (learnCounter[v.word] || 0) >= 2).length;
+      const total = vocabulary.length;
+      const unlearned = total - learned;
+
+      document.getElementById("progressStats").innerText =
+        `✅ Đã học xong: ${learned} / 🕐 Còn lại: ${unlearned}`;
+    }
+
+    function renderQuestion() {
+      const pool = vocabulary.filter(
+        v => (learnCounter[v.word] || 0) < 3 && !usedWords.includes(v.word)
+      );
+
+      if (pool.length === 0) {
+        document.getElementById("question").innerText = "🎉 Bạn đã hoàn thành học phần!";
+        document.getElementById("choices").innerHTML = "";
+        document.getElementById("feedback").innerText = "";
+        renderProgressStats();
+        return;
+      }
+
+      const correct = pool[Math.floor(Math.random() * pool.length)];
+      usedWords.push(correct.word);
+      currentQuestion = correct;
+
+      const otherChoices = vocabulary
+        .filter(v => v.word !== correct.word)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3)
+        .map(v => v.meaning);
+
+      const allChoices = shuffle([correct.meaning, ...otherChoices]);
+
+      document.getElementById("question").innerText = correct.word;
+      speakJapanese(correct.word);
+
+      const choiceContainer = document.getElementById("choices");
+      choiceContainer.innerHTML = "";
+      allChoices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.innerText = choice;
+        btn.className = "w-full bg-white border border-gray-300 px-4 py-2 rounded hover:bg-blue-100";
+        btn.onclick = () => handleAnswer(choice);
+        choiceContainer.appendChild(btn);
+      });
+
+      document.getElementById("feedback").innerText = "";
+      renderProgressStats();
+    }
+
+    function handleAnswer(choice) {
+      const feedback = document.getElementById("feedback");
+      const correctWord = currentQuestion.word;
+      const correctMeaning = currentQuestion.meaning;
+
+      if (choice === correctMeaning) {
+        learnCounter[correctWord] = (learnCounter[correctWord] || 0) + 1;
+        feedback.innerText = "✅ Chính xác!";
+        feedback.className = "mt-4 text-center text-lg font-bold text-green-600";
+      } else {
+        feedback.innerText = `❌ Sai. Đáp án đúng: ${correctMeaning}`;
+        feedback.className = "mt-4 text-center text-lg font-bold text-red-600";
+      }
+
+      renderProgressStats();
+    }
+
+    function nextQuestion() {
+      renderQuestion();
+    }
+
+    function openImport() {
+      document.getElementById("importModal").classList.remove("hidden");
+    }
+
+    function closeImport() {
+      document.getElementById("importModal").classList.add("hidden");
+    }
+
+    function saveImport() {
+      const lesson = document.getElementById("lessonName").value.trim();
+      const raw = document.getElementById("importTextarea").value.trim();
+
+      if (!lesson || !raw) {
+        alert("Vui lòng nhập tên học phần và nội dung!");
+        return;
+      }
+
+      const lines = raw.split("\n").filter(line => line.includes("-"));
+      const newVocab = lines.map(line => {
+        const [word, meaning] = line.split("-").map(s => s.trim());
+        return { word, meaning };
+      });
+
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      lessons[lesson] = newVocab;
+      localStorage.setItem("lessons", JSON.stringify(lessons));
+
+      loadLessonList();
+      selectLesson(lesson);
+      closeImport();
+    }
+
+    function loadLessonList() {
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      const container = document.getElementById("lessonList");
+      container.innerHTML = "";
+
+      Object.keys(lessons).forEach(lesson => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-center bg-gray-200 rounded px-2 py-1 gap-2";
+
+        const btn = document.createElement("button");
+        btn.innerText = lesson;
+        btn.className = "hover:bg-blue-200 rounded px-2";
+        btn.onclick = () => selectLesson(lesson);
+
+        const delBtn = document.createElement("button");
+        delBtn.innerText = "❌";
+        delBtn.className = "text-red-500 hover:text-red-700 text-sm";
+        delBtn.onclick = () => deleteLesson(lesson);
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(delBtn);
+        container.appendChild(wrapper);
+      });
+
+    }
+
+    function selectLesson(lesson) {
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+
+      vocabulary = lessons[lesson] || [];
+      learnCounter = {};   // reset lại lần học
+      usedWords = [];
+      currentLesson = lesson;
+      nextQuestion();
+    }
+
+    loadLessonList();
+
+    function deleteLesson(lesson) {
+      if (!confirm(`Bạn có chắc muốn xoá học phần "${lesson}" không?`)) return;
+
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      delete lessons[lesson];
+      localStorage.setItem("lessons", JSON.stringify(lessons));
+
+      if (lesson === currentLesson) {
+        vocabulary = [];
+        currentLesson = "";
+        document.getElementById("question").innerText = "Chưa chọn học phần.";
+        document.getElementById("choices").innerHTML = "";
+        document.getElementById("feedback").innerText = "";
+        document.getElementById("progressStats").innerText = "";
+      }
+
+      loadLessonList();
+    }
+
+  </script>
+
+
+</body>
+
+</html>
