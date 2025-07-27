@@ -14,7 +14,7 @@
 
     <div class="flex justify-between items-center mb-4">
       <div id="progressStats" class="text-sm text-gray-700"></div>
-      <div class="text-xs text-gray-400">* Mỗi từ cần đúng 3 lần để hoàn thành</div>
+      <div class="text-xs text-gray-400">* Mỗi từ cần đúng 2 lần để hoàn thành</div>
     </div>
 
     <!-- Câu hỏi -->
@@ -72,7 +72,7 @@
     }
 
     function renderProgressStats() {
-      const learned = vocabulary.filter(v => (learnCounter[v.word] || 0) >= 3).length;
+      const learned = vocabulary.filter(v => (learnCounter[v.word] || 0) >= 2).length;
       const total = vocabulary.length;
       const unlearned = total - learned;
 
