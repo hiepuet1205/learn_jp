@@ -181,12 +181,24 @@
       container.innerHTML = "";
 
       Object.keys(lessons).forEach(lesson => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-center bg-gray-200 rounded px-2 py-1 gap-2";
+
         const btn = document.createElement("button");
         btn.innerText = lesson;
-        btn.className = "bg-gray-200 px-3 py-1 rounded hover:bg-blue-200";
+        btn.className = "hover:bg-blue-200 rounded px-2";
         btn.onclick = () => selectLesson(lesson);
-        container.appendChild(btn);
+
+        const delBtn = document.createElement("button");
+        delBtn.innerText = "❌";
+        delBtn.className = "text-red-500 hover:text-red-700 text-sm";
+        delBtn.onclick = () => deleteLesson(lesson);
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(delBtn);
+        container.appendChild(wrapper);
       });
+
     }
 
     function selectLesson(lesson) {
