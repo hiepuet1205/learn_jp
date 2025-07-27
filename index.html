@@ -212,6 +212,26 @@
     }
 
     loadLessonList();
+
+    function deleteLesson(lesson) {
+      if (!confirm(`Bạn có chắc muốn xoá học phần "${lesson}" không?`)) return;
+
+      const lessons = JSON.parse(localStorage.getItem("lessons") || "{}");
+      delete lessons[lesson];
+      localStorage.setItem("lessons", JSON.stringify(lessons));
+
+      if (lesson === currentLesson) {
+        vocabulary = [];
+        currentLesson = "";
+        document.getElementById("question").innerText = "Chưa chọn học phần.";
+        document.getElementById("choices").innerHTML = "";
+        document.getElementById("feedback").innerText = "";
+        document.getElementById("progressStats").innerText = "";
+      }
+
+      loadLessonList();
+    }
+
   </script>
 
 
